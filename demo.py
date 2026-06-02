@@ -1,61 +1,68 @@
-import numpy as np
+from pathlib import Path
+
 import pandas as pd
-import pickle
-import json
 
-BASE_DIR = r"C:\Users\Administrator\OneDrive\Desktop\WID3002 MINDsmall Dataset"
 
-print("Loading model files ...")
+BASE_DIR = Path(r"C:\Users\Administrator\OneDrive\Desktop\WID3002 DataSet")
 
-articles         = pd.read_csv(BASE_DIR + r"\data\articles.csv")
-article_embeddings = np.load(BASE_DIR + r"\models\article_embeddings.npy")
+METRICS_FILE = BASE_DIR / "metrics_comparison.csv"
+RECOMMENDATIONS_FILE = BASE_DIR / "ranked_recommendations.csv"
 
-with open(BASE_DIR + r"\data\article_id_index.json") as f:
-    article_id_index = json.load(f)
 
-with open(BASE_DIR + r"\models\user_profiles.pkl", "rb") as f:
-    user_profiles = pickle.load(f)
+def show_metrics():
+    if not METRICS_FILE.exists():
+        print("metrics_comparison.csv was not found.")
+        print("Run the notebook first to generate the evaluation results.")
+        return
 
-with open(BASE_DIR + r"\data\popular_by_category.json") as f:
-    popular_by_category = json.load(f)
+    metrics = pd.read_csv(METRICS_FILE)
+    print("\nFinal Evaluation Results")
+    print(metrics.to_string(index=False))
 
-interactions = pd.read_csv(BASE_DIR + r"\data\ranked_recommendations.csv")
+    ndcg_row = metrics[metrics["Metric"] == "NDCG@10"]
+    if not ndcg_row.empty:
+        hybrid = float(ndcg_row["Hybrid Model"].iloc[0])
+        baseline = float(ndcg_row["Popularity Baseline"].iloc[0])
+        improvement = hybrid - baseline
+        relative = improvement / baseline * 100 if baseline else 0
 
-print("All files loaded.\n")
+        print("\nMain Result")
+        print(f"Hybrid NDCG@10: {hybrid:.4f}")
+        print(f"Baseline NDCG@10: {baseline:.4f}")
+        print(f"Absolute improvement: {improvement:.4f}")
+        print(f"Relative improvement: {relative:.1f}%")
 
-# ── Scoring functions ──────────────────────────────────────────────────────
-def content_score(user_vector, article_embs):
-    norm_user = user_vector / (np.linalg.norm(user_vector) + 1e-9)
-    norms     = np.linalg.norm(article_embs, axis=1, keepdims=True) + 1e-9
-    return article_embs.dot(norm_user) / norms.squeeze()
 
-def recommend(user_id, top_k=10, alpha=0.6):
-    profile = user_profiles.get(user_id, None)
+def show_sample_recommendations(n=10):
+    if not RECOMMENDATIONS_FILE.exists():
+        print("\nranked_recommendations.csv was not found.")
+        return
 
-    # Cold-start fallback
-    if profile is None:
-        all_popular = [nid for nids in popular_by_category.values() for nid in nids]
-        rec_ids = list(dict.fromkeys(all_popular))[:top_k]
-    else:
-        scores  = content_score(profile, article_embeddings)
-        top_idx = np.argsort(scores)[::-1][:top_k]
-        rec_ids = [articles.iloc[i]["news_id"] for i in top_idx]
+    usecols = [
+        "impression_id",
+        "user_id",
+        "news_id",
+        "rank",
+        "label",
+        "score",
+        "content_score",
+        "popularity_score",
+        "category_score",
+        "subcategory_score",
+    ]
 
-    results = []
-    for nid in rec_ids:
-        row = articles[articles["news_id"] == nid]
-        if not row.empty:
-            r = row.iloc[0]
-            results.append({"news_id": nid, "category": r["category"], "title": r["title"]})
-    return results
+    recommendations = pd.read_csv(RECOMMENDATIONS_FILE, usecols=usecols)
+    first_impression = recommendations["impression_id"].iloc[0]
+    sample = (
+        recommendations[recommendations["impression_id"] == first_impression]
+        .sort_values("rank")
+        .head(n)
+    )
 
-# ── Run ────────────────────────────────────────────────────────────────────
-user_id = input("Enter user ID (e.g. U100): ").strip()
-recs    = recommend(user_id)
+    print(f"\nSample ranked recommendations for impression {first_impression}")
+    print(sample.to_string(index=False))
 
-if not recs:
-    print("No recommendations found.")
-else:
-    print(f"\nTop {len(recs)} recommendations for {user_id}:\n")
-    for i, r in enumerate(recs, 1):
-        print(f"  {i}. [{r['category']}] {r['title']}")
+
+if __name__ == "__main__":
+    show_metrics()
+    show_sample_recommendations()
