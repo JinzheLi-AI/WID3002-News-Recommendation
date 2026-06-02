@@ -1,87 +1,125 @@
 # WID3002 Personalized News Recommendation System
-**Group Assignment G28** — WID3002 Natural Language Processing
+
+Group Assignment G28 - WID3002 Natural Language Processing
 
 ## Overview
-A hybrid news recommendation system that combines content-based filtering and collaborative filtering with an NLP pipeline to deliver personalized article recommendations. Built on the [MIND dataset](https://msnews.github.io) (Microsoft News Dataset).
 
-## System Architecture
-The pipeline consists of four stages:
+This project builds a personalized news recommendation system using the MINDsmall dataset. The model ranks candidate news articles for each user by combining article content, user reading history, collaborative filtering, popularity, category preference, and subcategory preference.
 
-1. **Data Preprocessing** — Parse and clean the MIND dataset, producing `articles.csv` and interaction logs
-2. **NLP Pipeline** — Text cleaning, tokenization (spaCy), TF-IDF vectorization, and sentence embeddings (MiniLM-L6-v2)
-3. **User Profiling** — Build recency-weighted user interest vectors; popularity-based cold-start fallback for new users
-4. **Recommendation Engine** — Hybrid scoring: `final_score = α × content_score + (1-α) × collab_score`
+The final system uses a hybrid ranking approach and compares its performance with a popularity-based baseline.
+
+## Dataset
+
+Required MINDsmall files:
+
+```text
+MINDsmall_train/
+├── news.tsv
+└── behaviors.tsv
+
+MINDsmall_dev/
+├── news.tsv
+└── behaviors.tsv
+```
+
+Only `news.tsv` and `behaviors.tsv` are required. The entity and relation embedding files are not used in this project.
+
+Large raw dataset files are not included in this repository.
+
+## Project Structure
+
+```text
+README.md
+demo.py
+WID3002_G28_NewsRecommendation_Final_Sections.ipynb
+data/
+├── demo_articles.csv
+├── demo_ranked_recommendations.csv
+└── articles_sample.csv
+results/
+├── metrics_comparison.csv
+└── evaluation_plot.png
+```
+
+## Methodology
+
+The system uses five recommendation signals:
+
+| Signal | Description |
+|---|---|
+| content_score | Semantic similarity between user profile and candidate article |
+| cf_score | Collaborative filtering score from similar users |
+| popularity_score | Article popularity based on training clicks |
+| category_score | Broad topic preference from user history |
+| subcategory_score | More specific topic preference from user history |
+
+Final hybrid score:
+
+```text
+final_score =
+    0.45 * content_score +
+    0.10 * cf_score +
+    0.20 * popularity_score +
+    0.10 * category_score +
+    0.15 * subcategory_score
+```
+
+These weights achieved the best NDCG@10 among the tested weight combinations.
 
 ## Results
 
-| Metric | Hybrid Model | Popularity Baseline |
-|--------|-------------|-------------------|
-| P@5 | 0.0011 | 0.0000 |
-| R@5 | 0.0024 | 0.0000 |
-| NDCG@5 | 0.0020 | 0.0000 |
-| P@10 | 0.0006 | 0.0001 |
-| R@10 | 0.0025 | 0.0004 |
-| NDCG@10 | 0.0020 | 0.0002 |
+| Metric | Hybrid Model | Popularity Baseline | Improvement |
+|---|---:|---:|---:|
+| P@5 | 0.1209 | 0.0906 | 0.0303 |
+| R@5 | 0.4795 | 0.3782 | 0.1013 |
+| NDCG@5 | 0.3825 | 0.2784 | 0.1041 |
+| P@10 | 0.0849 | 0.0688 | 0.0161 |
+| R@10 | 0.6466 | 0.5489 | 0.0977 |
+| NDCG@10 | 0.4359 | 0.3375 | 0.0984 |
 
-## Setup & Usage
+The hybrid model improves NDCG@10 by 0.0984 over the popularity baseline, which is approximately a 29.2% relative improvement.
 
-### 1. Clone the repository
-```bash
-git clone https://github.com/JinzheLi-AI/WID3002-News-Recommendation.git
-cd WID3002-News-Recommendation
+## How to Run the Notebook
+
+1. Download and extract `MINDsmall_train` and `MINDsmall_dev`.
+2. Place `news.tsv` and `behaviors.tsv` in the dataset folder used in the notebook.
+3. Open and run:
+
+```text
+WID3002_G28_NewsRecommendation_Final_Sections.ipynb
 ```
 
-### 2. Download the MIND-small dataset
-Go to https://msnews.github.io, agree to the license terms, and download:
-- **MIND-small Training Set**
-- **MIND-small Validation Set**
+The notebook generates the full recommendation output, evaluation metrics, and evaluation plot.
 
-Extract both zip files into the project folder so the structure looks like:
-```
-WID3002-News-Recommendation/
-├── MINDsmall_train/
-│   ├── news.tsv
-│   └── behaviors.tsv
-├── MINDsmall_dev/
-│   ├── news.tsv
-│   └── behaviors.tsv
-└── ...
-```
+## Interactive Demo
 
-### 3. Install dependencies
-```bash
-pip install pandas numpy spacy scikit-learn sentence-transformers scipy matplotlib
-python -m spacy download en_core_web_sm
-```
+Run:
 
-### 4. Run the notebook
-Open `WID3002_G28_NewsRecommendation.ipynb` in VS Code or Jupyter and click **Run All**.
-
-This will take ~20 minutes (mostly the sentence embedding step). Once complete, all model files will be generated locally.
-
-### 5. Get recommendations
 ```bash
 python demo.py
 ```
-Enter any user ID (e.g. `U100`, `U500`, `U1000`) to see personalized recommendations.
 
-## Repository Structure
-```
-├── WID3002_G28_NewsRecommendation.ipynb   # Main notebook (all stages)
-├── demo.py                                 # Quick inference script
-├── data/
-│   ├── articles.csv
-│   ├── article_id_index.json
-│   ├── popular_by_category.json
-│   └── ranked_recommendations.csv
-├── models/
-│   ├── tfidf_vectorizer.pkl
-│   ├── tfidf_matrix.pkl
-│   ├── article_embeddings.npy
-│   └── user_profiles.pkl
-└── results/
-    ├── metrics_comparison.csv
-    └── evaluation_plots.png
+The demo uses small sample files included in `data/`, so it can run without the full MIND dataset.
+
+Demo options:
+
+1. Show final evaluation results
+2. Show example IDs
+3. Search recommendations by `impression_id`
+4. Search recommendations by `user_id`
+5. Show clicked articles ranked by the model
+6. Explain score columns
+
+Example ID formats:
+
+```text
+impression_id: 1
+user_id: U80234
+news_id: N42844
 ```
 
-> **Note:** `MINDsmall_train/` and `MINDsmall_dev/` are not included in this repo. Download them separately from https://msnews.github.io.
+## Notes
+
+The final weights were selected using a validation subset. This does not guarantee globally optimal weights, but it provides a practical setting for the hybrid model.
+
+Validation click labels are used for evaluation and weight selection only. They are not used directly as ranking features.
