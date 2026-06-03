@@ -3,7 +3,6 @@
 Group Assignment G28 - WID3002 Natural Language Processing
 
 ## Overview
-<<<<<<< HEAD
 
 This project builds a personalized news recommendation system using the MINDsmall dataset. The model ranks candidate news articles for each user by combining article content, user reading history, collaborative filtering, popularity, category preference, and subcategory preference.
 
