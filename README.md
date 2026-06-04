@@ -4,25 +4,27 @@ Group Assignment G28 - WID3002 Natural Language Processing
 
 ## Overview
 
-This project builds a personalized news recommendation system using the MINDsmall dataset. The model ranks candidate news articles for each user by combining article content, user reading history, collaborative filtering, popularity, category preference, and subcategory preference.
+This project implements a personalized news recommendation system using the MINDsmall dataset. The system ranks candidate news articles for each user by combining article content, user reading history, collaborative filtering, popularity, category preference, and subcategory preference.
 
-The final system uses a hybrid ranking approach and compares its performance with a popularity-based baseline.
+The final model follows a hybrid ranking approach. Its performance is compared with a popularity-based baseline using ranking metrics commonly used in recommendation tasks.
 
 ## Dataset
 
-Required MINDsmall files:
+The project uses the MINDsmall dataset from Microsoft News Dataset.
+
+Required files:
 
 ```text
 MINDsmall_train/
-├── news.tsv
-└── behaviors.tsv
+|-- news.tsv
+`-- behaviors.tsv
 
 MINDsmall_dev/
-├── news.tsv
-└── behaviors.tsv
+|-- news.tsv
+`-- behaviors.tsv
 ```
 
-Only `news.tsv` and `behaviors.tsv` are required. The entity and relation embedding files are not used in this project.
+Only `news.tsv` and `behaviors.tsv` are required. The entity and relation embedding files are not used in this implementation.
 
 Large raw dataset files are not included in this repository.
 
@@ -30,28 +32,32 @@ Large raw dataset files are not included in this repository.
 
 ```text
 README.md
+requirements.txt
+app.py
 demo.py
-WID3002_G28_NewsRecommendation_Final_Sections.ipynb
+WID3002_G28_NewsRecommendation.ipynb
+
 data/
-├── demo_articles.csv
-├── demo_ranked_recommendations.csv
-└── articles_sample.csv
+|-- demo_articles.csv
+|-- demo_ranked_recommendations.csv
+`-- articles_sample.csv
+
 results/
-├── metrics_comparison.csv
-└── evaluation_plot.png
+|-- metrics_comparison.csv
+`-- evaluation_plot.png
 ```
 
 ## Methodology
 
-The system uses five recommendation signals:
+The recommendation engine uses five ranking signals:
 
 | Signal | Description |
 |---|---|
-| content_score | Semantic similarity between user profile and candidate article |
-| cf_score | Collaborative filtering score from similar users |
-| popularity_score | Article popularity based on training clicks |
-| category_score | Broad topic preference from user history |
-| subcategory_score | More specific topic preference from user history |
+| `content_score` | Measures similarity between the user's reading profile and each candidate article |
+| `cf_score` | Uses collaborative filtering patterns from users with similar reading behavior |
+| `popularity_score` | Gives higher scores to articles with stronger click popularity in the training data |
+| `category_score` | Matches candidate articles with the user's preferred news categories |
+| `subcategory_score` | Adds a more specific topic preference based on article subcategories |
 
 Final hybrid score:
 
@@ -64,7 +70,19 @@ final_score =
     0.15 * subcategory_score
 ```
 
-These weights achieved the best NDCG@10 among the tested weight combinations.
+These weights were selected because they produced the best NDCG@10 among the tested weight combinations.
+
+## Evaluation
+
+This is a recommendation ranking task, so the model is evaluated with ranking metrics instead of classification accuracy.
+
+| Metric | Purpose |
+|---|---|
+| `P@K` | Measures how many recommended articles in the top K are actually clicked |
+| `R@K` | Measures how many clicked articles are successfully retrieved within the top K |
+| `NDCG@K` | Measures whether clicked articles are ranked near the top of the recommendation list |
+
+`P@10` means Precision@10 and `R@10` means Recall@10. These match the evaluation direction stated in the proposal.
 
 ## Results
 
@@ -77,49 +95,84 @@ These weights achieved the best NDCG@10 among the tested weight combinations.
 | R@10 | 0.6466 | 0.5489 | 0.0977 |
 | NDCG@10 | 0.4359 | 0.3375 | 0.0984 |
 
-The hybrid model improves NDCG@10 by 0.0984 over the popularity baseline, which is approximately a 29.2% relative improvement.
+The hybrid model improves NDCG@10 by 0.0984 over the popularity baseline, which is about a 29.2% relative improvement.
 
-## How to Run the Notebook
+## Web Demo
 
-1. Download and extract `MINDsmall_train` and `MINDsmall_dev`.
-2. Place `news.tsv` and `behaviors.tsv` in the dataset folder used in the notebook.
-3. Open and run:
+The project includes an interactive Streamlit web application:
 
 ```text
-WID3002_G28_NewsRecommendation_Final_Sections.ipynb
+app.py
 ```
 
-The notebook generates the full recommendation output, evaluation metrics, and evaluation plot.
+Install dependencies:
 
-## Interactive Demo
+```bash
+pip install -r requirements.txt
+```
 
-Run:
+Run the web demo:
+
+```bash
+streamlit run app.py
+```
+
+If the `streamlit` command is not available, run:
+
+```bash
+python -m streamlit run app.py
+```
+
+Then open:
+
+```text
+http://localhost:8501
+```
+
+The web demo includes:
+
+| Page | Function |
+|---|---|
+| Home | Shows the system overview, workflow, data status, and main performance result |
+| Evaluation | Displays the evaluation table, baseline comparison, and explanation of ranking metrics |
+| Recommendation Demo | Lets users search recommendations by `user_id` or `impression_id` |
+| Article Explorer | Allows browsing and filtering news articles by category or keyword |
+| About | Summarizes the model design, evaluation method, and project limitations |
+
+The recommendation page shows ranked articles, clicked labels, final scores, score breakdowns, and article details.
+
+Example ID formats:
+
+```text
+user_id: U38418
+impression_id: 8
+news_id: N20477
+```
+
+## Terminal Demo
+
+A command-line demo is also included:
 
 ```bash
 python demo.py
 ```
 
-The demo uses small sample files included in `data/`, so it can run without the full MIND dataset.
+The terminal demo can show evaluation results, example IDs, recommendation lists, clicked articles, and score explanations.
 
-Demo options:
+## How to Run the Notebook
 
-1. Show final evaluation results
-2. Show example IDs
-3. Search recommendations by `impression_id`
-4. Search recommendations by `user_id`
-5. Show clicked articles ranked by the model
-6. Explain score columns
-
-Example ID formats:
+1. Download and extract `MINDsmall_train` and `MINDsmall_dev`.
+2. Place `news.tsv` and `behaviors.tsv` in the dataset folder.
+3. Open and run:
 
 ```text
-impression_id: 1
-user_id: U80234
-news_id: N42844
+WID3002_G28_NewsRecommendation.ipynb
 ```
+
+The notebook generates the recommendation output, evaluation metrics, and evaluation plot.
 
 ## Notes
 
-The final weights were selected using a validation subset. This does not guarantee globally optimal weights, but it provides a practical setting for the hybrid model.
+The final weights were selected using validation data. This gives a practical and measurable improvement over the baseline, but it does not prove a mathematically global optimum over all possible weight combinations.
 
-Validation click labels are used for evaluation and weight selection only. They are not used directly as ranking features.
+Validation click labels are used for evaluation and weight tuning only. They are not used directly as ranking features.
