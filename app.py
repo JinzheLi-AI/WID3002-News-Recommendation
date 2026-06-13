@@ -94,6 +94,45 @@ SIGNAL_COLUMNS = {
     "subcategory": "subcategory_score",
 }
 
+EXTERNAL_NEWS_EXAMPLES = {
+    "AI study tool": {
+        "title": "New AI tool helps students summarize daily news faster",
+        "abstract": (
+            "A newly released artificial intelligence tool is designed to help students "
+            "read, summarize, and compare news articles more efficiently."
+        ),
+        "category": "news",
+        "subcategory": "technology",
+    },
+    "College football": {
+        "title": "College football team prepares for championship after strong season",
+        "abstract": (
+            "The team is entering the championship game after a successful season with "
+            "strong defensive performances and several close wins."
+        ),
+        "category": "sports",
+        "subcategory": "football_ncaa",
+    },
+    "Market update": {
+        "title": "Stock market rises as investors react to lower inflation data",
+        "abstract": (
+            "Major stock indexes moved higher after new inflation data suggested that "
+            "price growth may be slowing."
+        ),
+        "category": "finance",
+        "subcategory": "markets",
+    },
+    "Music tour": {
+        "title": "Popular singer announces new world tour after album release",
+        "abstract": (
+            "The artist announced a new international tour following the release of a "
+            "successful album, and tickets are expected to sell quickly."
+        ),
+        "category": "music",
+        "subcategory": "musicnews",
+    },
+}
+
 
 st.set_page_config(
     page_title="News Recommendation System",
@@ -827,6 +866,12 @@ def custom_news_ranking_page(recs):
         "and subcategory. The popularity score is estimated automatically from historical data."
     )
 
+    default_example = EXTERNAL_NEWS_EXAMPLES["AI study tool"]
+    st.session_state.setdefault("custom_title", default_example["title"])
+    st.session_state.setdefault("custom_abstract", default_example["abstract"])
+    st.session_state.setdefault("custom_category", default_example["category"])
+    st.session_state.setdefault("custom_subcategory", default_example["subcategory"])
+
     left, right = st.columns([1, 2])
     with left:
         model_name = st.selectbox("Selected Model", list(MODEL_SCORE_COLUMNS.keys()))
@@ -838,20 +883,22 @@ def custom_news_ranking_page(recs):
         top_k = st.slider("Display top recommendations", 5, 20, 10)
 
         st.markdown("### New Article")
-        title = st.text_input(
-            "Title",
-            value="New AI tool helps students summarize daily news faster",
-        )
-        abstract = st.text_area(
-            "Abstract",
-            value=(
-                "A newly released artificial intelligence tool is designed to help students "
-                "read, summarize, and compare news articles more efficiently."
-            ),
-            height=130,
-        )
-        category = st.text_input("Category", value="news")
-        subcategory = st.text_input("Subcategory", value="technology")
+        with st.expander("Example external news", expanded=True):
+            example_names = list(EXTERNAL_NEWS_EXAMPLES.keys())
+            example_cols = st.columns(2)
+            for idx, example_name in enumerate(example_names):
+                if example_cols[idx % 2].button(example_name, use_container_width=True):
+                    example = EXTERNAL_NEWS_EXAMPLES[example_name]
+                    st.session_state["custom_title"] = example["title"]
+                    st.session_state["custom_abstract"] = example["abstract"]
+                    st.session_state["custom_category"] = example["category"]
+                    st.session_state["custom_subcategory"] = example["subcategory"]
+                    st.session_state.pop("custom_news_payload", None)
+
+        title = st.text_input("Title", key="custom_title")
+        abstract = st.text_area("Abstract", key="custom_abstract", height=130)
+        category = st.text_input("Category", key="custom_category")
+        subcategory = st.text_input("Subcategory", key="custom_subcategory")
 
         with st.expander("What should I enter?"):
             st.write("Use a normal news headline and a short abstract, similar to the MIND news data.")
@@ -868,6 +915,20 @@ def custom_news_ranking_page(recs):
                 "entered manually; it is estimated from similar historical articles."
             )
 
+        current_payload = (
+            model_name,
+            mode,
+            custom_id,
+            top_k,
+            title.strip(),
+            abstract.strip(),
+            category.strip(),
+            subcategory.strip(),
+        )
+        analyze_clicked = st.button("Analyze / Re-rank", type="primary", use_container_width=True)
+        if analyze_clicked:
+            st.session_state["custom_news_payload"] = current_payload
+
     if not title.strip():
         st.warning("Please enter a title for the external news article.")
         return
@@ -878,6 +939,12 @@ def custom_news_ranking_page(recs):
         category = "unknown"
     if not subcategory.strip():
         subcategory = "unknown"
+
+    if st.session_state.get("custom_news_payload") != current_payload:
+        with right:
+            st.markdown("### Re-ranked Candidate List")
+            st.info("Enter or choose an external news article, then click Analyze / Re-rank.")
+        return
 
     if mode == "User":
         context = recs[recs["user_id"].astype(str).str.lower() == custom_id.lower()]
