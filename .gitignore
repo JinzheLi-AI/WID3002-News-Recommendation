@@ -1,27 +1,30 @@
-# Raw MIND dataset
+# Python
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# Local MINDsmall dataset
 MINDsmall_train/
 MINDsmall_dev/
-*.tsv
-*.vec
+MINDsmall_train.zip
+MINDsmall_dev.zip
 
-# Large generated files
-interactions.csv
-interactions_*.csv
-*_interactions.csv
+# Large generated artifacts
 ranked_recommendations.csv
-proposal_ranked_recommendations.csv
-proposal_improved_ranked_recommendations.csv
-interactions_proposal_cleaned.csv
-
-# Model artifacts
-models/
+interactions.csv
+articles.csv
+article_embeddings.npy
+article_id_index.json
+tfidf_matrix.pkl
+tfidf_vectorizer.pkl
 *.npy
 *.pkl
-proposal_article_embeddings.npy
-proposal_tfidf_matrix.pkl
-proposal_tfidf_vectorizer.pkl
 
-# Notebook cache
-.ipynb_checkpoints/
-__pycache__/
-*.pyc
+# Local environment
+.venv/
+venv/
+.env
+
+# OS files
+.DS_Store
+Thumbs.db
