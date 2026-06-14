@@ -30,18 +30,18 @@ This follows the MIND candidate ranking setting:
 
 ## Dataset
 
-The project uses the MINDsmall dataset from Microsoft News Dataset.
+This project uses the MINDsmall dataset from Microsoft News Dataset.
 
-Dataset homepage:
+Official dataset page:
 
 https://msnews.github.io/
 
-Direct MINDsmall download links:
+Please download the following files from the official MIND dataset page:
 
-- MINDsmall training set: https://mind201910small.blob.core.windows.net/release/MINDsmall_train.zip
-- MINDsmall validation set: https://mind201910small.blob.core.windows.net/release/MINDsmall_dev.zip
+- MINDsmall_train.zip
+- MINDsmall_dev.zip
 
-For the full notebook experiment, the following files are required locally:
+After downloading and extracting the files, place them in the project root folder:
 
 ```text
 MINDsmall_train/
